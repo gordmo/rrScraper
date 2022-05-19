@@ -6,7 +6,6 @@ page = requests.get(url)
 cont = str(page.content)
 
 soup = bs(page.content, 'html.parser')
-#results = soup.find_all("div", class_="chapter-inner chapter-content")
 results = soup.find_all("span", attrs={"style":"font-size: 1.3em"})
 
 a = open('holder.txt', 'w')
