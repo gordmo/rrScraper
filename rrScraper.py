@@ -15,64 +15,45 @@ book.add_author('Author')
 #grabbing page full of chapters
 url = "https://www.royalroad.com/fiction/22518/chrysalis"
 page = requests.get(url)
-cont = str(page.content)
-
 soup = bs(page.content, 'html.parser')
-results = soup.find_all(class_ = "text-right")
-a = open('holder.txt', 'w')
+
+results = soup.find_all('tr', class_='chapter-row')
+#print text version of results
+#print(results)
+
+
+#search for links to all chapters
+urls = []
 for result in results:
-    #link = row.find('a').get('href')
-    print(result.get('href'))
-    #print(result.text) #.text.strip()
-    #a.write(result.text + '\n') #.text.strip()
-a.close()
+    chapter_url = result.find('a')['href']
+    urls.append("http://royalroad.com"+chapter_url)
 
+for url1 in urls:
+    chapNum = str(urls.index(url1))
+    chapter_page = requests.get(url1)
+    chapter_soup = bs(chapter_page.content, 'html.parser')
+    chapter_text = chapter_soup.find_all("span", attrs={"style":"font-size: 1.3em"})
+    chapter_text_clean = []
+    for text in chapter_text:
+        chapter_text_clean.append(text.text.strip())
+    chapter = epub.EpubHtml(title='Chapter '+ chapNum, file_name='chapter.xhtml', lang='en')
+    chapter.content = chapter_text
+    book.add_item(chapter)
+    book.spine.append(chapter)
 
-
-
-
-#soup = bs(page.content, 'html.parser')
-#results = soup.find_all("span", attrs={"style":"font-size: 1.3em"})
-
-#a = open('holder.txt', 'w')
-#for result in results:
-    #print(result.text.strip())
-    #a.write(result.text.strip() + '\n')
-#a.close()
-
-#create content before adding to book
-c1 = epub.EpubHtml(title='introTest',
-                    file_name='introTest.xhtml',
-                    lang='en')
-c1.set_content(u'<html><body><h1>Introduction</h1><p>Introduction paragraph.</p></body></html>')
-
-
-c2 = epub.EpubHtml(title='About this book',
-                   file_name='about.xhtml')
-c2.set_content('<h1>About this book</h1><p>This is a book.</p>')
-
-#adding content to the book
-book.add_item(c1)
-book.add_item(c2)
-#technically this could hold any number of things (style sheets, images, html)
-
-style = 'body { font-family: Times, Times New Roman, serif; }'
-nav_css = epub.EpubItem(uid="style_nav",
-                        file_name="style/nav.css",
-                        media_type="text/css",
-                        content=style)
-book.add_item(nav_css)
-
-#table of contents
-book.toc = (epub.Link("introTest.xhtml", "introTest", 'intro'),
-            (
-                epub.Section("Languages"),
-                (c1, c2)
-            )
-)
-
-#creating the spine
-book.spine = ['nav', c1, c2]
+#search for all chapters
+for result in results:
+    #get chapter title
+    #chapter_title = result.find(class_ = "chapter-title").get_text()
+    #get chapter text
+    #chapter_text = result.find(class_ = "chapter-text").get_text()
+    #create chapter
+    #chapter = epub.EpubHtml(title=chapter_title, file_name=chapter_title)
+    #chapter.content = chapter_text
+    pass
+    #book.add_item(chapter)
+    #book.toc.append(epub.Link(chapter_title, chapter_title, chapter_title))
+    #book.spine.append(chapter)
 
 #add NCX and nav
 book.add_item(epub.EpubNcx())
