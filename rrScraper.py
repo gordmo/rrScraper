@@ -13,15 +13,12 @@ book.set_language('en')
 book.add_author('Author')
 
 #grabbing page full of chapters
-url = "https://www.royalroad.com/fiction/22518/chrysalis"
+url = "https://www.royalroad.com/fiction/46901/the-last-orellen"
 page = requests.get(url)
 soup = bs(page.content, 'html.parser')
 
 results = soup.find_all('tr', class_='chapter-row')
-#print text version of results
-#print(results)
-
-
+book.toc = ()
 #search for links to all chapters
 urls = []
 for result in results:
@@ -32,32 +29,29 @@ for url1 in urls:
     chapNum = str(urls.index(url1))
     chapter_page = requests.get(url1)
     chapter_soup = bs(chapter_page.content, 'html.parser')
-    chapter_text = chapter_soup.find_all("span", attrs={"style":"font-size: 1.3em"})
+    chapter_name = chapter_soup.find('h1', class_='font-white').text
+    
+    #clean string of any non-alphanumeric characters
+    chapter_name = chapter_name.replace(' ', '_')
+
+    chapter_name = ''.join(ch for ch in chapter_name if ch.isalnum())
+    chapter_cont = chapter_soup.find("div", class_="chapter-inner chapter-content")
+    chapter_text = chapter_cont.find_all('p')
+
     chapter_text_clean = []
     for text in chapter_text:
         chapter_text_clean.append(text.text.strip())
-    chapter = epub.EpubHtml(title='Chapter '+ chapNum, file_name='chapter.xhtml', lang='en')
-    chapter.content = chapter_text
+
+    chapter = epub.EpubHtml(title=chapter_name, file_name=chapter_name+'.xhtml', lang='en')
+    #chapter.set_content = (u'<html><body><h1>chapter_name</h1><p>chapter_text_clean</p></body></html>').replace('chapter_name', chapter_name).replace('chapter_text_clean', ' '.join(chapter_text_clean))
+    chapter.set_content = (u'<html><body><h1>'+chapter_name+'</h1><p>'+' '.join(chapter_text_clean)+'</p></body></html>')
     book.add_item(chapter)
     book.spine.append(chapter)
-
-#search for all chapters
-for result in results:
-    #get chapter title
-    #chapter_title = result.find(class_ = "chapter-title").get_text()
-    #get chapter text
-    #chapter_text = result.find(class_ = "chapter-text").get_text()
-    #create chapter
-    #chapter = epub.EpubHtml(title=chapter_title, file_name=chapter_title)
-    #chapter.content = chapter_text
-    pass
-    #book.add_item(chapter)
-    #book.toc.append(epub.Link(chapter_title, chapter_title, chapter_title))
-    #book.spine.append(chapter)
+    print("appended chapter: "+ chapter_name)
 
 #add NCX and nav
 book.add_item(epub.EpubNcx())
 book.add_item(epub.EpubNav())
 
 #writing the book
-epub.write_epub('test.epub', book, {})
+epub.write_epub('TLO.epub', book, {})
